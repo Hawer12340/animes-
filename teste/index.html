@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Animes</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0d14;--panel:#121622;--panel-2:#191f2d;--line:#252d3d;--text:#edf0f7;--muted:#9aa5b5;--accent:#a78bfa;--accent-strong:#8b5cf6;--green:#6ee7b7;--red:#fda4af}
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#252044 0%,transparent 45%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5}
+.container{max-width:1280px;margin:0 auto;padding:32px 28px 64px}
+.anime-selector{margin-bottom:32px;padding:22px;background:rgba(18,22,34,.82);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 40px #0002}
+.anime-selector h2{font-size:.78rem;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.14em}
+.anime-search{width:100%;max-width:480px;margin:0 0 18px;padding:12px 15px;background:#0d111a;border:1px solid var(--line);border-radius:10px;color:var(--text);font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s}
+.anime-search::placeholder{color:#788396}.anime-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px #a78bfa22}.search-empty{color:var(--muted);padding:12px;display:none}
+.json-picker{margin-top:18px;color:var(--muted)}.json-picker input{display:block;margin-top:10px;color:var(--text)}
+.anime-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:12px;max-height:390px;overflow:auto;padding:2px 3px 8px}
+.anime-card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;text-align:center;content-visibility:auto;contain-intrinsic-size:130px 170px;transition:transform .18s,border-color .18s,background .18s;}
+.anime-card:hover{border-color:#7764be;transform:translateY(-3px)}.anime-card.active{border-color:var(--accent);background:#211e35;box-shadow:0 0 0 1px #a78bfa44}
+.anime-card img,.anime-card .no-img{width:76px;height:104px;object-fit:cover;border-radius:8px;margin:0 auto 9px;display:flex;align-items:center;justify-content:center;background:var(--panel-2);font-size:1.8rem}
+.anime-card .name{font-size:.76rem;color:#e1e5ef;line-height:1.35;overflow-wrap:anywhere}.anime-card .site-tag{font-size:.65rem;color:var(--green);margin-top:5px;overflow-wrap:anywhere}
+.anime-header{display:flex;align-items:flex-start;gap:28px;margin:0 0 26px;padding:26px;background:linear-gradient(120deg,#191d2b,#121622 72%);border:1px solid var(--line);border-radius:18px}
+.anime-poster{flex:0 0 176px;width:176px;height:246px;object-fit:cover;border-radius:12px;box-shadow:0 12px 30px #0006}
+.anime-info{min-width:0;padding-top:4px}.anime-info h1{font-size:clamp(1.6rem,3vw,2.35rem);line-height:1.15;margin-bottom:14px;color:#fff;letter-spacing:-.035em}
+.anime-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.tag{background:#24283a;padding:5px 11px;border:1px solid #30364a;border-radius:999px;font-size:.75rem;color:#c4b5fd}
+.tag.site{background:#142a27;border-color:#1e443a;color:var(--green)}.synopsis{font-size:.92rem;line-height:1.75;color:#b4bdcb;max-height:130px;overflow:auto;white-space:pre-line}
+.player-container{position:relative;width:100%;aspect-ratio:16/9;background:#05070b;border:1px solid #303648;border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 18px 48px #0005}
+.player-container iframe,.player-container video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000;display:block}.player-container video{object-fit:contain}
+.player-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1rem;flex-direction:column;gap:10px;background:radial-gradient(ellipse at center,#202438 0%,#080a10 76%)}
+.player-list{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 28px}.player-choice{background:var(--panel);border:1px solid var(--line);color:#d7dbea;padding:9px 14px;border-radius:9px;cursor:pointer;font:inherit;font-size:.85rem;transition:background .18s,border-color .18s,color .18s}
+.player-choice:hover,.player-choice.active{border-color:var(--accent);background:#28223d;color:#fff}.player-choice:focus-visible,.ep-btn:focus-visible,.anime-card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.filters{display:flex;gap:12px;margin:0 0 14px;flex-wrap:wrap;align-items:center}.filters select{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:9px 12px;border-radius:9px;font-size:.88rem;cursor:pointer}
+.section-title{font-size:1.2rem;margin:0 0 16px;color:#fff;display:flex;align-items:center;gap:10px}.section-title::after{content:'';height:1px;background:var(--line);flex:1}
+.ep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.ep-btn{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px;cursor:pointer;text-align:center;transition:transform .18s,border-color .18s,background .18s;color:#c0c8d6;font-size:.84rem}
+.ep-btn:hover{border-color:#7764be;background:#191a2a;transform:translateY(-2px)}.ep-btn.active{border-color:var(--accent);background:#211e35;color:#fff;box-shadow:0 0 0 1px #a78bfa33}
+.ep-load-more{grid-column:1/-1;color:#d8ccff;border-style:dashed}
+.ep-btn .ep-num{font-size:1rem;font-weight:700;color:#c4b5fd}.ep-btn .ep-version{font-size:.68rem;margin-top:6px;padding:2px 7px;border-radius:999px;display:inline-block;background:#252a38;color:#cbd5e1}
+.ep-btn .ep-version.dublado{background:#352027;color:var(--red)}.ep-btn .ep-version.legendado{background:#17302a;color:var(--green)}.ep-btn .ep-status{font-size:.7rem;margin-top:4px;min-height:1em}.ep-btn .ep-status.ok{color:var(--green)}.ep-btn .ep-status.fail{color:var(--red)}
+.loading{text-align:center;padding:56px 24px;color:var(--muted)}.loading h2{font-size:1.05rem;line-height:1.6}.spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){.container{padding:18px 14px 42px}.anime-selector{padding:16px;border-radius:14px}.anime-list{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;max-height:320px}.anime-card{padding:8px}.anime-card img,.anime-card .no-img{width:64px;height:88px}.anime-header{flex-direction:column;align-items:center;text-align:center;gap:18px;padding:20px 16px}.anime-poster{flex-basis:auto;width:142px;height:198px}.anime-meta{justify-content:center}.synopsis{text-align:left}.ep-grid{grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px}.ep-btn{padding:10px 6px}.player-container{border-radius:12px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="content" class="loading"><div class="spinner"></div>Carregando...</div>
+</div>
+<script>
+let allAnimes=[],currentAnime=null,currentEpisode=null,hlsInstance=null,currentPlayerUrls=[],visibleEpisodeCount=120;
+const EPISODES_PER_BATCH=120;
+
+function getEpisodePlayerUrls(ep){
+  const items=[];
+  const add=(value)=>{
+    const url=String(typeof value==='string'?value:(value?.url||'')).trim();
+    if(url&&!items.some(item=>item.url===url))items.push({url,type:typeof value==='object'?(value?.type||''):''});
+  };
+  (ep.players||[]).forEach(add);
+  (ep.sources||[]).forEach(add);
+  // O scraper grava a melhor URL em ep.url; ela pode ser direta mesmo quando
+  // também existem iframes registrados em players.
+  if(ep.url)add(ep.url);
+  // Quando há um arquivo/stream de vídeo disponível, usa o player do próprio
+  // site em vez de abrir a página de player do servidor (ex.: AniZero).
+  const isDirectMedia=({url})=>/\.(?:m3u8|mp4|webm|mpd)(?:$|[?#])|videohls\.php(?:[?#]|$)|googlevideo\.com/i.test(url);
+  return [...items.filter(isDirectMedia),...items.filter(item=>!isDirectMedia(item))];
+}
+
+function setAnimeData(data){
+  allAnimes=(Array.isArray(data)?data:[data]).filter(a=>a&&typeof a==='object'&&Array.isArray(a.episodes));
+  if(!allAnimes.length)throw new Error('O arquivo não contém animes com episódios.');
+  renderAll(0);
+}
+
+async function loadAllData(){
+  if(location.protocol==='file:'){
+    throw new Error('O navegador bloqueia a leitura do animes.json quando o HTML é aberto diretamente. Abra o terminal nesta pasta, execute: python -m http.server 8080 e acesse http://localhost:8080/index.html');
+  }
+  try{
+    const r=await fetch('./animes.json',{cache:'no-store'});
+    if(!r.ok)throw new Error(`Não foi possível carregar animes.json (HTTP ${r.status}). Confira se index.html e animes.json estão na mesma pasta e se o servidor está aberto.`);
+    const d=await r.json();
+    setAnimeData(d);
+  }catch(e){
+    if(e instanceof SyntaxError)throw new Error('O animes.json está com formato inválido. Verifique o arquivo ou rode o scraper novamente.');
+    throw e;
+  }
+  if(allAnimes.length===0)throw new Error('Nenhum anime com episódios foi encontrado no animes.json. Rode o scraper primeiro.');
+}
+
+async function loadSelectedJson(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  try{
+    setAnimeData(JSON.parse(await file.text()));
+  }catch(e){
+    document.getElementById('load-error').textContent=e.message==='O arquivo não contém animes com episódios.'?e.message:'Não consegui ler esse JSON. Selecione o animes.json válido.';
+  }
+}
+
+function renderAll(idx=0){
+  const el=document.getElementById('content');
+  const cards=allAnimes.map((a,i)=>{
+    const img=a.image?`<img src="${a.image}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=no-img>🎬</div>'">`:`<div class="no-img">🎬</div>`;
+    const searchText=encodeURIComponent(`${a.title||''} ${(a.sites||[a.site]).join(' ')}`.toLocaleLowerCase('pt-BR'));
+    const sites=(a.sites&&a.sites.length?a.sites:[a.site]).filter(Boolean).join(', ');
+    return`<div class="anime-card ${i===idx?'active':''}" data-search="${searchText}" onclick="selectAnime(${i})">${img}<div class="name">${a.title||''}</div><div class="site-tag">${sites}</div></div>`;
+  }).join('');
+  const anime=allAnimes[idx];
+  currentAnime=anime;currentEpisode=null;visibleEpisodeCount=EPISODES_PER_BATCH;
+  el.innerHTML=`
+    <div class="anime-selector"><h2>Animes (${allAnimes.length})</h2><input id="anime-search" class="anime-search" type="search" placeholder="Buscar anime por nome ou site..." oninput="filterAnimeCards(this.value)" aria-label="Buscar anime por nome ou site"><div id="search-empty" class="search-empty">Nenhum anime encontrado.</div><div class="anime-list">${cards}</div></div>
+    <div class="anime-header">
+      ${anime.image?`<img class="anime-poster" src="${anime.image}" onerror="this.style.display='none'">`:''}
+      <div class="anime-info"><h1>${anime.title||''}</h1>
+      <div class="anime-meta"><span class="tag site">${(anime.sites&&anime.sites.length?anime.sites:[anime.site]).filter(Boolean).join(', ')}</span>${(anime.genres||[]).map(g=>`<span class="tag">${g}</span>`).join('')}<span class="tag">${anime.total_episodes||anime.episodes?.length||0} eps</span></div>
+      <p class="synopsis">${anime.synopsis||''}</p></div>
+    </div>
+    <div class="player-container" id="player"><div class="player-placeholder"><span>📺</span><span>Selecione um episódio</span></div></div>
+    <div class="player-list" id="player-list" aria-label="Servidores"></div>
+    <div class="filters"><select id="vf" onchange="applyFilters(true)"><option value="all">Todos</option><option value="dublado">Dublado</option><option value="legendado">Legendado</option></select></div>
+    <h2 class="section-title">Episódios (<span id="ec">${anime.episodes?.length||0}</span>)</h2>
+    <div class="ep-grid" id="eg"></div>`;
+  applyFilters();
+}
+
+function filterAnimeCards(query){
+  const term=(query||'').trim().toLocaleLowerCase('pt-BR');
+  let visible=0;
+  document.querySelectorAll('.anime-card').forEach(card=>{
+    let haystack='';
+    try{haystack=decodeURIComponent(card.dataset.search||'');}catch(e){}
+    const match=haystack.includes(term);
+    card.hidden=!match;
+    if(match)visible++;
+  });
+  const empty=document.getElementById('search-empty');
+  if(empty)empty.style.display=visible?'none':'block';
+}
+
+function selectAnime(i){if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}renderAll(i);window.scrollTo({top:0,behavior:'smooth'});}
+
+function applyFilters(reset=false){
+  if(!currentAnime)return;
+  if(reset)visibleEpisodeCount=EPISODES_PER_BATCH;
+  const v=document.getElementById('vf')?.value||'all';
+  const filtered=[];
+  (currentAnime.episodes||[]).forEach((ep,idx)=>{if(v==='all'||ep.version===v)filtered.push({ep,idx});});
+  document.getElementById('ec').textContent=`${Math.min(visibleEpisodeCount,filtered.length)} / ${filtered.length}`;
+  const shown=filtered.slice(0,visibleEpisodeCount);
+  document.getElementById('eg').innerHTML=shown.map(({ep,idx})=>{
+    const ok=ep.ok;
+    const sc=ok===true?'ok':ok===false?'fail':'';
+    const st=ok===true?'✓':ok===false?'✗':'';
+    return`<button class="ep-btn ${currentEpisode===idx?'active':''}" onclick="play(${idx})"><div class="ep-num">Ep ${ep.number}</div><span class="ep-version ${ep.version||''}">${ep.version||''}</span><div class="ep-status ${sc}">${st}</div></button>`;
+  }).join('')+(filtered.length>visibleEpisodeCount?`<button class="ep-btn ep-load-more" onclick="loadMoreEpisodes()">Carregar mais (${filtered.length-visibleEpisodeCount} restantes)</button>`:'');
+}
+
+function loadMoreEpisodes(){visibleEpisodeCount+=EPISODES_PER_BATCH;applyFilters();}
+
+function play(idx){
+  const ep=currentAnime.episodes[idx];
+  if(!ep)return;
+  currentEpisode=idx;applyFilters();
+
+  // Sem player incorporado, não abre a página do site de origem.
+  if(currentAnime.site==='animesdigital.org'){
+    document.getElementById('player-list').innerHTML='';
+    const player=document.getElementById('player');
+    player.innerHTML='<div class="player-placeholder"><span>Este episódio não tem player incorporado.</span></div>';
+    return;
+  }
+
+  currentPlayerUrls=getEpisodePlayerUrls(ep);
+  if(!currentPlayerUrls.length){
+    document.getElementById('player-list').innerHTML='';
+    const player=document.getElementById('player');
+    player.innerHTML='<div class="player-placeholder"><span>Este episódio não tem player incorporado.</span></div>';
+    return;
+  }
+  const version=(ep.version||'').toLocaleLowerCase('pt-BR');
+  document.getElementById('player-list').innerHTML=currentPlayerUrls.map((item,i)=>`<button class="player-choice ${i===0?'active':''}" onclick="selectPlayer(${i})">${version?version[0].toLocaleUpperCase('pt-BR')+version.slice(1):'Player'} ${i+1}</button>`).join('');
+  tryPlay(currentPlayerUrls,0);
+}
+
+function selectPlayer(index){
+  if(!currentPlayerUrls[index])return;
+  document.querySelectorAll('.player-choice').forEach((button,i)=>button.classList.toggle('active',i===index));
+  tryPlay(currentPlayerUrls,index);
+}
+
+function tryPlay(urls,attempt){
+  if(attempt>=urls.length){document.getElementById('player').innerHTML='<div class="player-placeholder"><span>❌</span><span>Todos os servidores caíram</span></div>';return;}
+  const item=urls[attempt];
+  const url=typeof item==='string'?item:item.url;
+  const c=document.getElementById('player');
+  const isM3u8=/\.m3u8(?:$|[?#])|videohls\.php(?:[?#]|$)/i.test(url);
+  const isIframe=(typeof item==='object'&&item.type==='iframe')||url.includes('embed')||url.includes('player')||url.includes('blogger.com');
+  if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}
+
+  if(isIframe){
+    c.innerHTML=`<iframe src="${url}" allowfullscreen allow="autoplay;encrypted-media"></iframe>`;
+  }else if(isM3u8){
+    c.innerHTML='<video controls autoplay></video>';
+    const video=c.querySelector('video');
+    const init=()=>{
+      if(Hls.isSupported()){
+        hlsInstance=new Hls();
+        hlsInstance.on(Hls.Events.ERROR,(e,d)=>{if(d.fatal){hlsInstance.destroy();hlsInstance=null;if(attempt+1<urls.length)tryPlay(urls,attempt+1);}});
+        hlsInstance.loadSource(url);hlsInstance.attachMedia(video);
+      }else{video.src=url;}
+    };
+    if(!document.getElementById('hlsjs')){
+      const s=document.createElement('script');s.id='hlsjs';s.src='https://cdn.jsdelivr.net/npm/hls.js@latest';
+      s.onload=init;document.head.appendChild(s);
+    }else{init();}
+  }else{
+    c.innerHTML=`<video controls autoplay src="${url}"></video>`;
+  }
+  c.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+loadAllData().then(()=>renderAll(0)).catch(e=>{
+  document.getElementById('content').innerHTML=`<div class="loading"><h2>⚠️ ${e.message}</h2><label class="json-picker">Ou selecione o arquivo animes.json aqui:<input type="file" accept=".json,application/json" onchange="loadSelectedJson(this)"></label><p id="load-error" role="alert"></p></div>`;
+});
+</script>
+</body>
+</html>   
